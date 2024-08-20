@@ -3,37 +3,11 @@ import tree_reader
 import numpy as np
 import numpy.ma as ma
 from scipy.stats import multivariate_normal as mvnorm
-#from numpy.random import multivariate_normal as np_mvnorm
-#from numpy.random import default_rng
-from sklearn.covariance import GraphicalLassoCV, ledoit_wolf, LedoitWolf
 from sklearn.covariance import ShrunkCovariance
 import matplotlib.pyplot as plt
 import warnings
-#warnings.filterwarnings("ignore")
 import seaborn as sns
 
-#rng = default_rng(12345)
-#np_mvnorm = rng.multivariate_normal
-
-
-def DEPcov_plot(cov1,cov2):
-    plt.figure(figsize=(10, 6))
-    plt.subplots_adjust(left=0.02, right=0.98)
-    # plot the covariances
-    covs = [
-        ("base model", cov1),
-        ("shift node", cov2),
-    ]
-    vmax = cov1.max()
-    for i, (name, this_cov) in enumerate(covs):
-        plt.subplot(2, 2, i + 1)
-        plt.imshow(
-            this_cov, interpolation="nearest", vmin=-vmax, vmax=vmax, cmap=plt.cm.RdBu_r
-        )
-        plt.xticks(())
-        plt.yticks(())
-        plt.title("%s covariance" % name)
-    plt.show()
 
 def cov_plot(cov1,cov2):
     plt.figure(figsize=(10, 6))
@@ -299,11 +273,6 @@ def mean_impute(means,x):
             x[i] = means[i]
     return x
 
-#def ledoit_wolf(empcov,shrink):
-#    n = float(len(empcov))
-#    mu = np.trace(empcov) / n
-#    lw = (1.-shrink) * emp
-
 def lassoCV(empcov):
     model = GraphicalLassoCV()
     model.fit(empcov)
@@ -316,10 +285,6 @@ def node_cov_ll(subtree):
     #lw_cov = ledoit_wolf(cov)[0]
     shrink = True
     if shrink == True:
-        #print(ledoit_wolf(cov)[1])
-        #lw=ledoit_wolf(cov)
-        #lw_cov = lw[0]
-        #lw_shrink = lw[1]
         intens=0.10
         lw_cov = ShrunkCovariance(shrinkage=intens).fit(cov)
         lw_cov =lw_cov.covariance_
@@ -341,7 +306,7 @@ def node_cov_ll(subtree):
     for n in subtree.iternodes():
         if n.parent == None or n.data["reg"] != subtree.data["reg"]:#or n.note == False:
             continue
-        #tc+=1
+        
         nchanges = np.array(n.data["change"]) # ma.masked_invalid(n.data["change"])
         if np.isnan(np.sum(nchanges)):
             nchanges = mean_impute(empmeans,nchanges)
@@ -393,17 +358,11 @@ def recon_subtree_models(tree,min):
             curAIC = (2. * (k * 2.)) - (2. * combll)
         elif crit == "bic":
             curAIC = (-2 * basell) + np.log(nnode*ntraits)
-        #curAICc = curAIC + (( ( ( 2*((k*2.)**2) ) + (2 * (k * 2)) ) ) / ( nnode - (k*2.) - 1))
         for sn in n.iternodes():
             #if sn != n:
             sn.data["reg"] = 0
                 #sn.note = True
 
-        #print(n.label)
-        #print("BIC",baseBIC,curBIC)
-        #print("AIC",baseAIC,curAIC)
-        #print("AICc",baseAICc,curAICc)
-        #cov_plot(tree.data["cov"],n.data["cov"])
         if curAIC < baseAIC:
             nodescores[n.label] = curAIC
     nodescores = sorted(nodescores,key=nodescores.get)
